@@ -52,13 +52,29 @@ while True:
 
             # Count open buy / sell orders
             open_orders = b.api_query('getopenorders')['result']
-            open_buys = 0
-            open_sales = 0
+            open_buys = {}
+            open_sales = {}
             for order in open_orders:
+                if order['Exchange'] not in open_buys.keys():
+                    open_buys[order['Exchange']] = {'total_coin': 0, 'total_btc': 0, 'average_price': 0.0, 'count': 0}
+                if order['Exchange'] not in open_sales.keys():
+                    open_sales[order['Exchange']] = {'total_coin': 0, 'total_btc': 0, 'average_price': 0.0, 'count': 0}
                 if order['OrderType'] == 'LIMIT_SELL':
-                    open_sales += 1
+                    open_sales[order['Exchange']]['total_btc']  += order['Limit']*order['Quantity']
+                    open_sales[order['Exchange']]['total_coin'] += order['Quantity']
+                    open_sales[order['Exchange']]['count'] += 1
                 if order['OrderType'] == 'LIMIT_BUY':
-                    open_buys += 1
+                    open_buys[order['Exchange']]['total_btc']  += order['Limit']*order['Quantity']
+                    open_buys[order['Exchange']]['total_coin'] += order['Quantity']
+                    open_buys[order['Exchange']]['count'] += 1
+
+            # Compute average buy/sell prices
+            for x in open_sales:
+                if open_sales[x]['total_coin']:
+                    open_sales[x]['average_price'] = open_sales[x]['total_btc']/open_sales[x]['total_coin']
+            for x in open_buys:
+                if open_buys[x]['total_coin']:
+                    open_buys[x]['average_price'] = open_buys[x]['total_btc']/open_buys[x]['total_coin']
 
             # Alert activity
             if len(new_sales):
@@ -68,10 +84,30 @@ while True:
 
             # Log new trades
             for order in new_sales:
-                print timestamp(order), "Sold  ", ("%0.08f" % order['Quantity']).rjust(12), order['Exchange'].replace('BTC-', ''), '@', "%0.08f" % order['PricePerUnit'], "| total @ %0.12f" % total, "| %s/%s" % (open_buys, open_sales), "Buy/Sell orders"
+                avg_price = open_sales[order['Exchange']]['average_price']
+                open_buy_count = open_buys[order['Exchange']]['count']
+                open_sale_count = open_sales[order['Exchange']]['count']
+                coin_name = order['Exchange'].replace('BTC-', '')
+                print ' '.join([
+                        timestamp(order),
+                        "Sold  ", ("%0.08f" % order['Quantity']).rjust(12), coin_name, '@', "%0.08f" % order['PricePerUnit'],
+                        "| avg", coin_name, "limit @ %0.12f" % avg_price,
+                        "| %s/%s" % (open_buy_count, open_sale_count), coin_name, "buy/sell orders",
+                        "| total @ %0.12f BTC" % total,
+                        ])
                 sales.append(order)
             for order in new_buys:
-                print timestamp(order), "Bought", ("%0.08f" % order['Quantity']).rjust(12), order['Exchange'].replace('BTC-', ''), '@', "%0.08f" % order['PricePerUnit'], "| total @ %0.12f" % total, "| %s/%s" % (open_buys, open_sales), "Buy/Sell orders"
+                avg_price = open_buys[order['Exchange']]['average_price']
+                open_buy_count = open_buys[order['Exchange']]['count']
+                open_sale_count = open_sales[order['Exchange']]['count']
+                coin_name = order['Exchange'].replace('BTC-', '')
+                print ' '.join([
+                        timestamp(order),
+                        "Bought", ("%0.08f" % order['Quantity']).rjust(12), coin_name, '@', "%0.08f" % order['PricePerUnit'],
+                        "| avg", coin_name, "limit @ %0.12f" % avg_price,
+                        "| %s/%s" % (open_buy_count, open_sale_count), coin_name, "buy/sell orders",
+                        "| total @ %0.12f BTC" % total,
+                        ])
                 buys.append(order)
     except Exception, e:
         print e
