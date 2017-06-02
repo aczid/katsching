@@ -68,10 +68,10 @@ while True:
 
             # Log new trades
             for order in new_sales:
-                print timestamp(order), "Sold  ", ("%0.08f" % order['Quantity']).rjust(12), order['Exchange'].replace('BTC-', ''), '@', "%0.08f" % order['PricePerUnit'], "| total @", total, "| %s/%s" % (open_buys, open_sales), "Buy/Sell orders"
+                print timestamp(order), "Sold  ", ("%0.08f" % order['Quantity']).rjust(12), order['Exchange'].replace('BTC-', ''), '@', "%0.08f" % order['PricePerUnit'], "| total @ %0.12f" % total, "| %s/%s" % (open_buys, open_sales), "Buy/Sell orders"
                 sales.append(order)
             for order in new_buys:
-                print timestamp(order), "Bought", ("%0.08f" % order['Quantity']).rjust(12), order['Exchange'].replace('BTC-', ''), '@', "%0.08f" % order['PricePerUnit'], "| total @", total, "| %s/%s" % (open_buys, open_sales), "Buy/Sell orders"
+                print timestamp(order), "Bought", ("%0.08f" % order['Quantity']).rjust(12), order['Exchange'].replace('BTC-', ''), '@', "%0.08f" % order['PricePerUnit'], "| total @ %0.12f" % total, "| %s/%s" % (open_buys, open_sales), "Buy/Sell orders"
                 buys.append(order)
     except Exception, e:
         print e
