@@ -87,7 +87,7 @@ while True:
                 avg_price = open_sales[order['Exchange']]['average_price']
                 open_buy_count = open_buys[order['Exchange']]['count']
                 open_sale_count = open_sales[order['Exchange']]['count']
-                coin_name = order['Exchange'].replace('BTC-', '')
+                coin_name = order['Exchange'].replace('BTC-', '').rjust(5)
                 print ' '.join([
                         timestamp(order),
                         "Sold  ", ("%0.08f" % order['Quantity']).rjust(12), coin_name, '@', "%0.08f" % order['PricePerUnit'],
@@ -100,7 +100,7 @@ while True:
                 avg_price = open_buys[order['Exchange']]['average_price']
                 open_buy_count = open_buys[order['Exchange']]['count']
                 open_sale_count = open_sales[order['Exchange']]['count']
-                coin_name = order['Exchange'].replace('BTC-', '')
+                coin_name = order['Exchange'].replace('BTC-', '').rjust(5)
                 print ' '.join([
                         timestamp(order),
                         "Bought", ("%0.08f" % order['Quantity']).rjust(12), coin_name, '@', "%0.08f" % order['PricePerUnit'],
