@@ -18,8 +18,8 @@ def play_sound(sound):
 b = Bittrex('API_KEY', 'API_SECRET')
 sales = []
 buys = []
-orders = b.api_query('getorderhistory')
-for order in orders['result']:
+closed_orders = b.api_query('getorderhistory')
+for order in closed_orders['result']:
     if order['OrderType'] == 'LIMIT_SELL':
         sales.append(order)
     if order['OrderType'] == 'LIMIT_BUY':
@@ -30,8 +30,8 @@ while True:
     try:
         new_sales = []
         new_buys = []
-        orders = b.api_query('getorderhistory')['result']
-        for order in orders:
+        closed_orders = b.api_query('getorderhistory')['result']
+        for order in closed_orders:
             if order['OrderType'] == 'LIMIT_SELL':
                 if order not in sales:
                     new_sales.append(order)
@@ -40,6 +40,7 @@ while True:
                     new_buys.append(order)
 
         if len(new_buys) or len(new_sales):
+            # Get total balance
             total = 0
             summaries = b.get_market_summaries()['result']
             balances = b.get_balances()['result']
@@ -49,16 +50,28 @@ while True:
                 else:
                     total += bal['Balance']
 
+            # Count open buy / sell orders
+            open_orders = b.api_query('getopenorders')['result']
+            open_buys = 0
+            open_sales = 0
+            for order in open_orders:
+                if order['OrderType'] == 'LIMIT_SELL':
+                    open_sales += 1
+                if order['OrderType'] == 'LIMIT_BUY':
+                    open_buys += 1
+
+            # Alert activity
             if len(new_sales):
                 play_sound('katsching.wav')
             if len(new_buys):
                 play_sound('nomnom.wav')
 
+            # Log new trades
             for order in new_sales:
-                print timestamp(order), "Sold  ", ("%0.08f" % order['Quantity']).rjust(12), order['Exchange'].replace('BTC-', ''), '@', "%0.08f" % order['PricePerUnit'], "total @", total
+                print timestamp(order), "Sold  ", ("%0.08f" % order['Quantity']).rjust(12), order['Exchange'].replace('BTC-', ''), '@', "%0.08f" % order['PricePerUnit'], "| total @", total, "| %s/%s" % (open_buys, open_sales), "Buy/Sell orders"
                 sales.append(order)
             for order in new_buys:
-                print timestamp(order), "Bought", ("%0.08f" % order['Quantity']).rjust(12), order['Exchange'].replace('BTC-', ''), '@', "%0.08f" % order['PricePerUnit'], "total @", total
+                print timestamp(order), "Bought", ("%0.08f" % order['Quantity']).rjust(12), order['Exchange'].replace('BTC-', ''), '@', "%0.08f" % order['PricePerUnit'], "| total @", total, "| %s/%s" % (open_buys, open_sales), "Buy/Sell orders"
                 buys.append(order)
     except Exception, e:
         print e
