@@ -16,14 +16,14 @@ def play_sound(sound):
     mixer.quit()
 
 b = Bittrex('API_KEY', 'API_SECRET')
-sales = []
-buys = []
+closed_sales = []
+closed_buys = []
 closed_orders = b.api_query('getorderhistory')
 for order in closed_orders['result']:
     if order['OrderType'] == 'LIMIT_SELL':
-        sales.append(order)
+        closed_sales.append(order)
     if order['OrderType'] == 'LIMIT_BUY':
-        buys.append(order)
+        closed_buys.append(order)
 play_sound('katsching.wav')
 
 while True:
@@ -33,10 +33,10 @@ while True:
         closed_orders = b.api_query('getorderhistory')['result']
         for order in closed_orders:
             if order['OrderType'] == 'LIMIT_SELL':
-                if order not in sales:
+                if order not in closed_sales:
                     new_sales.append(order)
             if order['OrderType'] == 'LIMIT_BUY':
-                if order not in buys:
+                if order not in closed_buys:
                     new_buys.append(order)
 
         if len(new_buys) or len(new_sales):
@@ -82,33 +82,33 @@ while True:
             if len(new_buys):
                 play_sound('nomnom.wav')
 
+            def print_order(order, buysell):
+                if buysell == 'buy':
+                    buysell_verb = 'Bought'
+                    buysell_type = 'buy '
+                    avg_price = open_buys[order['Exchange']]['average_price']
+                else:
+                    buysell_verb = 'Sold  '
+                    buysell_type = 'sell'
+                    avg_price = open_sales[order['Exchange']]['average_price']
+                open_buy_count = open_buys[order['Exchange']]['count']
+                open_sale_count = open_sales[order['Exchange']]['count']
+                coin_name = order['Exchange'].replace('BTC-', '').rjust(5)
+                print ' '.join([
+                        timestamp(order),
+                        "%s " % buysell_verb, ("%0.08f" % order['Quantity']).rjust(12), coin_name, '@', "%0.08f" % order['PricePerUnit'],
+                        "| avg %s limit @ %0.8f" % (buysell_type, avg_price),
+                        "| %02d/%02d" % (open_buy_count, open_sale_count), coin_name, "buy/sell orders",
+                        "| total @ %0.12f BTC" % total,
+                        ])
+
             # Log new trades
             for order in new_sales:
-                avg_price = open_sales[order['Exchange']]['average_price']
-                open_buy_count = open_buys[order['Exchange']]['count']
-                open_sale_count = open_sales[order['Exchange']]['count']
-                coin_name = order['Exchange'].replace('BTC-', '').rjust(5)
-                print ' '.join([
-                        timestamp(order),
-                        "Sold  ", ("%0.08f" % order['Quantity']).rjust(12), coin_name, '@', "%0.08f" % order['PricePerUnit'],
-                        "| avg sell limit @ %0.8f" % avg_price,
-                        "| %02d/%02d" % (open_buy_count, open_sale_count), coin_name, "buy/sell orders",
-                        "| total @ %0.12f BTC" % total,
-                        ])
-                sales.append(order)
+                print_order(order, 'sell')
+                closed_sales.append(order)
             for order in new_buys:
-                avg_price = open_buys[order['Exchange']]['average_price']
-                open_buy_count = open_buys[order['Exchange']]['count']
-                open_sale_count = open_sales[order['Exchange']]['count']
-                coin_name = order['Exchange'].replace('BTC-', '').rjust(5)
-                print ' '.join([
-                        timestamp(order),
-                        "Bought", ("%0.08f" % order['Quantity']).rjust(12), coin_name, '@', "%0.08f" % order['PricePerUnit'],
-                        "| avg buy  limit @ %0.8f" % avg_price,
-                        "| %02d/%02d" % (open_buy_count, open_sale_count), coin_name, "buy/sell orders",
-                        "| total @ %0.12f BTC" % total,
-                        ])
-                buys.append(order)
+                print_order(order, 'buy')
+                closed_buys.append(order)
     except Exception, e:
         print e
     time.sleep(10)
