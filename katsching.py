@@ -92,7 +92,7 @@ while True:
                         timestamp(order),
                         "Sold  ", ("%0.08f" % order['Quantity']).rjust(12), coin_name, '@', "%0.08f" % order['PricePerUnit'],
                         "| avg", coin_name, "limit @ %0.12f" % avg_price,
-                        "| %s/%s" % (open_buy_count, open_sale_count), coin_name, "buy/sell orders",
+                        "| %02d/%02d" % (open_buy_count, open_sale_count), coin_name, "buy/sell orders",
                         "| total @ %0.12f BTC" % total,
                         ])
                 sales.append(order)
@@ -105,7 +105,7 @@ while True:
                         timestamp(order),
                         "Bought", ("%0.08f" % order['Quantity']).rjust(12), coin_name, '@', "%0.08f" % order['PricePerUnit'],
                         "| avg", coin_name, "limit @ %0.12f" % avg_price,
-                        "| %s/%s" % (open_buy_count, open_sale_count), coin_name, "buy/sell orders",
+                        "| %02d/%02d" % (open_buy_count, open_sale_count), coin_name, "buy/sell orders",
                         "| total @ %0.12f BTC" % total,
                         ])
                 buys.append(order)
