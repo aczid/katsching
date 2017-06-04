@@ -26,6 +26,10 @@ for order in closed_orders['result']:
         closed_buys.append(order)
 play_sound('katsching.wav')
 
+ANSI_RED    = "\033[31m"
+ANSI_GREEN  = "\033[32m"
+ANSI_OFF    = "\033[0m"
+
 while True:
     try:
         new_sales = []
@@ -45,7 +49,7 @@ while True:
             summaries = b.get_market_summaries()['result']
             balances = b.get_balances()['result']
             for bal in balances:
-                if bal['Currency'] != 'BTC':
+                if bal['Currency'] != 'BTC' and bal['Balance'] > 0:
                     total += bal['Balance'] * filter(lambda x: x['MarketName'] == 'BTC-'+bal['Currency'], summaries)[0]['Ask']
                 else:
                     total += bal['Balance']
@@ -86,20 +90,37 @@ while True:
                 if buysell == 'buy':
                     buysell_verb = 'Bought'
                     buysell_type = 'buy '
-                    avg_price = open_buys[order['Exchange']]['average_price']
+                    if order['Exchange'] in open_buys:
+                        avg_price = open_buys[order['Exchange']]['average_price']
+                    else:
+                        avg_price = 0
+                    color = ANSI_RED
                 else:
                     buysell_verb = 'Sold  '
                     buysell_type = 'sell'
-                    avg_price = open_sales[order['Exchange']]['average_price']
-                open_buy_count = open_buys[order['Exchange']]['count']
-                open_sale_count = open_sales[order['Exchange']]['count']
+                    if order['Exchange'] in open_sales:
+                        avg_price = open_sales[order['Exchange']]['average_price']
+                    else:
+                        avg_price = 0
+                    color = ANSI_GREEN
+                if order['Exchange'] in open_buys:
+                    open_buy_count = open_buys[order['Exchange']]['count']
+                else:
+                    open_buy_count = 0
+
+                if order['Exchange'] in open_sales:
+                    open_sale_count = open_sales[order['Exchange']]['count']
+                else:
+                    open_sale_count = 0
                 coin_name = order['Exchange'].replace('BTC-', '').rjust(5)
                 print ' '.join([
+                        color,
                         timestamp(order),
                         "%s " % buysell_verb, ("%0.08f" % order['Quantity']).rjust(12), coin_name, '@', "%0.08f" % order['PricePerUnit'],
                         "| avg %s limit @ %0.8f" % (buysell_type, avg_price),
                         "| %02d/%02d" % (open_buy_count, open_sale_count), coin_name, "buy/sell orders",
                         "| total @ %0.12f BTC" % total,
+                        ANSI_OFF,
                         ])
 
             # Log new trades
@@ -111,5 +132,5 @@ while True:
                 closed_buys.append(order)
     except Exception, e:
         print e
-    time.sleep(10)
+    time.sleep(30)
 
